@@ -13,35 +13,35 @@ on:
       DEVICE_TREE_URL:
         description: 'DEVICE_TREE_URL'
         required: true
-        default: 'https://github.com/Miracleprjkt/Twrp_S666LN'
+        default: 'https://github.com/Shirayuki39/twrp-device_tecno_TECNO-LI6'  # Your current tree
       DEVICE_TREE_BRANCH:
         description: 'DEVICE_TREE_BRANCH'
         required: true
-        default: 'main'
+        default: 'fox_12.1'
       DEVICE_PATH:
         description: 'DEVICE_PATH'
         required: true
-        default: 'device/itel/S666LN'
+        default: 'device/tecno/TECNO-LI6'
       COMMON_TREE_URL:
-        description: 'COMMON_TREE_URL (optional)'
+        description: 'COMMON_TREE_URL (if no common tree, leave blank)'
         required: false
-        default: ''
+        default: 'https://github.com/Shirayuki39/twrp-device_transsion_mt6789-common'
       COMMON_PATH:
-        description: 'COMMON_PATH (optional)'
+        description: 'COMMON_PATH (if no common tree, leave blank)'
         required: false
-        default: ''
+        default: 'device/transsion/mt6789-common'
       DEVICE_NAME:
         description: 'DEVICE_NAME'
         required: true
-        default: 'S666LN'
+        default: 'TECNO-LI6'
       MAKEFILE_NAME:
-        description: 'MAKEFILE_NAME (e.g. twrp_S666LN or orangefox_S666LN)'
+        description: 'MAKEFILE_NAME'
         required: true
-        default: 'twrp_S666LN'
+        default: 'twrp_LI6'  # Adjust if your tree uses something else like orangefox_LI6
       BUILD_TARGET:
-        description: 'BUILD_TARGET (recoveryimage or bootimage)'
+        description: 'BUILD_TARGET'
         required: true
-        default: 'recovery'
+        default: 'vendorboot'  # or 'recovery' / 'boot' depending on your tree
 
 jobs:
   build:
@@ -67,7 +67,7 @@ jobs:
       run: |
         sudo apt update && sudo apt upgrade -y
         DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
-            git python3 tar aria2 ccache
+            git python3 tar aria2 ccache unzip
         git clone https://gitlab.com/OrangeFox/misc/scripts
         cd scripts
         sudo bash setup/android_build_env.sh
@@ -105,15 +105,15 @@ jobs:
         swap-size-gb: 16
 
     - name: Building recovery
-      shell: bash  
+      shell: bash  # <<< THIS FIXES THE "detect the device properly" ERROR
       run: |
         cd ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
-        set +e
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
-        set -e
-        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && mka adbd ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
-      continue-on-error: true  
+        export FOX_BUILD_DEVICE=TECNO-LI6  # Helps detection
+        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng
+        make clean
+        mka ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
 
     - name: Check the output directory before uploading
       run: |
