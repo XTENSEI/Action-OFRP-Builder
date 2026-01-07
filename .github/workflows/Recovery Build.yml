@@ -9,7 +9,7 @@ on:
       MANIFEST_BRANCH:
         description: 'MANIFEST_BRANCH'
         required: true
-        default: '12.1'  # Stable OrangeFox branch
+        default: '12.1'
       DEVICE_TREE_URL:
         description: 'DEVICE_TREE_URL'
         required: true
@@ -17,31 +17,31 @@ on:
       DEVICE_TREE_BRANCH:
         description: 'DEVICE_TREE_BRANCH'
         required: true
-        default: 'main'  # Or whatever branch has the tree
+        default: 'main'
       DEVICE_PATH:
         description: 'DEVICE_PATH'
         required: true
         default: 'device/itel/S666LN'
       COMMON_TREE_URL:
-        description: 'COMMON_TREE_URL (optional for MT6789 common)'
+        description: 'COMMON_TREE_URL (optional)'
         required: false
-        default: 'https://github.com/transsion-mt6789-recovery/twrp-device_transsion_mt6789-common'
+        default: ''
       COMMON_PATH:
-        description: 'COMMON_PATH'
+        description: 'COMMON_PATH (optional)'
         required: false
-        default: 'device/transsion/mt6789-common'
+        default: ''
       DEVICE_NAME:
         description: 'DEVICE_NAME'
         required: true
         default: 'S666LN'
       MAKEFILE_NAME:
-        description: 'MAKEFILE_NAME (e.g., twrp_S666LN or orangefox_S666LN)'
+        description: 'MAKEFILE_NAME (e.g. twrp_S666LN or orangefox_S666LN)'
         required: true
-        default: 'twrp_S666LN'  # Change to orangefox_ if your tree uses that
+        default: 'twrp_S666LN'
       BUILD_TARGET:
-        description: 'BUILD_TARGET'
+        description: 'BUILD_TARGET (recoveryimage or bootimage)'
         required: true
-        default: 'recovery'  # Common for OrangeFox: recoveryimage or bootimage
+        default: 'recovery'
 
 jobs:
   build:
@@ -67,7 +67,6 @@ jobs:
       run: |
         sudo apt update && sudo apt upgrade -y
         DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
-            linux-modules-extra-$(uname -r) \
             git python3 tar aria2 ccache
         git clone https://gitlab.com/OrangeFox/misc/scripts
         cd scripts
@@ -103,15 +102,15 @@ jobs:
     - name: Set Swap Space
       uses: pierotofy/set-swap-space@master
       with:
-        swap-size-gb: 16  # Increased for safety
+        swap-size-gb: 16
 
     - name: Building recovery
-      shell: bash  # <<< KEY FIX: Force bash shell
+      shell: bash  # Forces bash shell - fixes the detection error
       run: |
         cd ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
-        export FOX_BUILD_DEVICE=${{ github.event.inputs.DEVICE_NAME }}  # Helps detection
+        export FOX_BUILD_DEVICE=${{ github.event.inputs.DEVICE_NAME }}
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng
         make clean
         mka ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
